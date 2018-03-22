@@ -771,7 +771,7 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
       goto out;
     }
 
-  obj = JSVAL_TO_OBJECT (ret_jsval);
+  obj = ret_jsval.toObjectOrNull();
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
@@ -896,7 +896,7 @@ action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
       goto out;
     }
 
-  obj = JSVAL_TO_OBJECT (ret_jsval);
+  obj = ret_jsval.toObjectOrNull();
 
   set_property_str (authority, obj, "id", action_id);
 
