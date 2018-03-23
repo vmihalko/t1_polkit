@@ -1285,20 +1285,18 @@ js_polkit_log (JSContext  *cx,
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
   bool ret = false;
-  JSString *str;
   char *s;
 
-  if (!JS_ConvertArguments (cx, argc, JS_ARGV (cx, vp), "S", &str))
-    goto out;
+  JS::CallArgs args = JS::CallArgsFromVp (argc, vp);
 
-  s = JS_EncodeString (cx, str);
+  s = JS_EncodeString (cx, args[0].toString ());
   JS_ReportWarningUTF8 (cx, s);
   JS_free (cx, s);
 
   ret = true;
 
-  JS_SET_RVAL (cx, vp, JS::UndefinedValue());  /* return undefined */
- out:
+  args.rval ().setUndefined (); /* return undefined */
+
   return ret;
 }
 
@@ -1370,7 +1368,7 @@ js_polkit_spawn (JSContext  *cx,
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
   bool ret = false;
-  JSObject *array_object;
+  JS::RootedObject array_object(cx);
   gchar *standard_output = NULL;
   gchar *standard_error = NULL;
   gint exit_status;
@@ -1383,8 +1381,8 @@ js_polkit_spawn (JSContext  *cx,
   SpawnData data = {0};
   guint n;
 
-  if (!JS_ConvertArguments (cx, js_argc, JS_ARGV (cx, vp), "o", &array_object))
-    goto out;
+  JS::CallArgs args = JS::CallArgsFromVp (js_argc, vp);
+  array_object = &args[0].toObject();
 
   if (!JS_GetArrayLength (cx, array_object, &array_len))
     {
@@ -1395,7 +1393,7 @@ js_polkit_spawn (JSContext  *cx,
   argv = g_new0 (gchar*, array_len + 1);
   for (n = 0; n < array_len; n++)
     {
-      JS::Value elem_val;
+      JS::RootedValue elem_val(cx);
       char *s;
 
       if (!JS_GetElement (cx, array_object, n, &elem_val))
@@ -1469,7 +1467,7 @@ js_polkit_spawn (JSContext  *cx,
   ret = true;
 
   ret_jsstr = JS_NewStringCopyZ (cx, standard_output);
-  JS_SET_RVAL (cx, vp, JS::StringValue (ret_jsstr));
+  args.rval ().setString (ret_jsstr);
 
  out:
   g_strfreev (argv);
@@ -1493,17 +1491,14 @@ js_polkit_user_is_in_netgroup (JSContext  *cx,
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
   bool ret = false;
-  JSString *user_str;
-  JSString *netgroup_str;
   char *user;
   char *netgroup;
   bool is_in_netgroup = false;
 
-  if (!JS_ConvertArguments (cx, argc, JS_ARGV (cx, vp), "SS", &user_str, &netgroup_str))
-    goto out;
+  JS::CallArgs args = JS::CallArgsFromVp (argc, vp);
 
-  user = JS_EncodeString (cx, user_str);
-  netgroup = JS_EncodeString (cx, netgroup_str);
+  user = JS_EncodeString (cx, args[0].toString());
+  netgroup = JS_EncodeString (cx, args[1].toString());
 
   if (innetgr (netgroup,
                NULL,  /* host */
@@ -1518,8 +1513,8 @@ js_polkit_user_is_in_netgroup (JSContext  *cx,
 
   ret = true;
 
-  JS_SET_RVAL (cx, vp, JS::BooleanValue (is_in_netgroup));
- out:
+  args.rval ().setBoolean (is_in_netgroup);
+
   return ret;
 }
 
