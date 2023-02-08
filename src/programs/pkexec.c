@@ -801,6 +801,19 @@ main (int argc, char *argv[])
   g_free (s);
   polkit_details_insert (details, "program", path);
   polkit_details_insert (details, "command_line", command_line);
+  if (strlen(command_line) > 80 ) {
+    char buff[80];
+    char delim[] = " ... ";
+
+    strncpy(buff, command_line, 38);
+    strncpy(buff + 38, delim, 5);
+    strncpy(buff + 43, command_line +
+                       strlen(command_line) - 37,
+                       38);
+    strncpy(command_line, buff, 80);
+    memset(command_line + 80, 0, strlen(command_line)-80);
+  }
+
   if (g_strcmp0 (action_id, "org.freedesktop.policykit.exec") == 0)
     {
       if (pw->pw_uid == 0)
